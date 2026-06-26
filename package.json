@@ -1,0 +1,32 @@
+{
+  "name": "noise-field",
+  "version": "0.1.0",
+  "description": "Generative CSS Houdini Paint API backgrounds — noise, plasma, marble, grain, mesh-gradient",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "houdini",
+    "css-paint",
+    "generative",
+    "background",
+    "noise"
+  ],
+  "author": "Dominik Pawlikowski",
+  "license": "MIT",
+  "dependencies": {
+    "css-paint-polyfill": "^3.4.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "typescript": "^6.0.3",
+    "vite": "^8.1.0"
+  }
+}

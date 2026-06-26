@@ -1,0 +1,293 @@
+/* ─── Reset & base ──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --surface-2: #1c1c28;
+  --border: #2a2a3a;
+  --text: #e8e8f0;
+  --text-muted: #8888aa;
+  --accent: #7c6af7;
+  --accent-2: #f093fb;
+  --green: #4ade80;
+  --yellow: #fbbf24;
+  --radius: 16px;
+  --font: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ─── Layout ────────────────────────────────────────────────────── */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Header ────────────────────────────────────────────────────── */
+.site-header {
+  border-bottom: 1px solid var(--border);
+  padding: 20px 32px;
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(12px);
+}
+
+.header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.header-title h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #fff;
+}
+
+.accent { color: var(--accent); }
+
+.header-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.header-badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ─── Badges ────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.badge--green  { background: rgba(74,222,128,.12); border-color: rgba(74,222,128,.3);  color: var(--green); }
+.badge--yellow { background: rgba(251,191,36,.12); border-color: rgba(251,191,36,.3);  color: var(--yellow); }
+.badge--ghost  { background: var(--surface-2); border-color: var(--border); color: var(--text-muted); }
+
+/* ─── Gallery ───────────────────────────────────────────────────── */
+.gallery {
+  flex: 1;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.loading {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 80px 0;
+  font-size: 14px;
+}
+
+/* ─── Worklet Card ──────────────────────────────────────────────── */
+.worklet-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.worklet-preview {
+  height: 300px;
+  width: 100%;
+  display: block;
+}
+
+/* Paint backgrounds + animation — worklet-specific */
+.worklet-noise-field   { background: paint(noise-field);   animation: nf-flow      12s  linear   infinite; }
+.worklet-plasma        { background: paint(plasma);        animation: plasma-flow   8s   linear   infinite; }
+.worklet-marble        { background: paint(marble);        animation: marble-flow   20s  linear   infinite; }
+.worklet-grain         { background: paint(grain);         animation: grain-flicker 0.1s steps(1) infinite; --grain-bg: #111; }
+.worklet-mesh-gradient { background: paint(mesh-gradient); animation: mesh-flow     10s  linear   infinite; }
+
+.worklet-info {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.worklet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.worklet-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.worklet-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  max-width: 520px;
+}
+
+.worklet-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+/* ─── Buttons ───────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: opacity .15s, background .15s;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { opacity: 0.85; }
+
+.btn-ghost {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+.btn-ghost:hover { color: var(--text); background: var(--border); }
+
+/* ─── Controls ──────────────────────────────────────────────────── */
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px 20px;
+}
+
+.controls--colors {
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+
+.control-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  cursor: default;
+}
+
+.control-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.control-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+  height: 4px;
+}
+
+.control-row--color {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+input[type="color"] {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 2px;
+  background: var(--surface-2);
+}
+
+/* ─── Source block ──────────────────────────────────────────────── */
+.source-block {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  color: #c9d1d9;
+  white-space: pre;
+}
+
+/* ─── Footer ────────────────────────────────────────────────────── */
+.site-footer {
+  border-top: 1px solid var(--border);
+  padding: 20px 32px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ─── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .gallery { padding: 24px 16px; }
+  .site-header { padding: 16px; }
+  .worklet-preview { height: 220px; }
+  .worklet-info { padding: 16px; }
+  .worklet-header { flex-direction: column; }
+}
