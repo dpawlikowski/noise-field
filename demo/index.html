@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>noise-field — Extended Demo</title>
+  <style>
+    /* ─── Tokens ─────────────────────────────────────────────────────── */
+    :root {
+      --bg:          #07070d;
+      --surface:     #0f0f1a;
+      --surface-2:   #171726;
+      --surface-3:   #1e1e32;
+      --border:      #252538;
+      --border-2:    #2e2e48;
+      --text:        #e2e2f0;
+      --text-2:      #9999bb;
+      --text-3:      #6666888;
+      --accent:      #7c6af7;
+      --accent-dim:  rgba(124,106,247,.15);
+      --green:       #4ade80;
+      --yellow:      #fbbf24;
+      --red:         #f87171;
+      --radius-sm:   6px;
+      --radius:      12px;
+      --radius-lg:   18px;
+      --sidebar-w:   260px;
+      --panel-w:     320px;
+      --font:        'Inter', system-ui, -apple-system, sans-serif;
+      --mono:        'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      --transition:  .15s ease;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ─── Layout ──────────────────────────────────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr var(--panel-w);
+      grid-template-rows: 52px 1fr;
+      height: 100vh;
+    }
+
+    /* ─── Topbar ──────────────────────────────────────────────────────── */
+    .topbar {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      z-index: 20;
+    }
+
+    .topbar-logo {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.4px;
+    }
+    .topbar-logo span { color: var(--accent); }
+
+    .topbar-sep { flex: 1; }
+
+    .topbar-tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 100px;
+      border: 1px solid;
+      white-space: nowrap;
+    }
+    .tag-green  { color: var(--green);  border-color: rgba(74,222,128,.3);  background: rgba(74,222,128,.08); }
+    .tag-yellow { color: var(--yellow); border-color: rgba(251,191,36,.3);  background: rgba(251,191,36,.08); }
+    .tag-dim    { color: var(--text-2); border-color: var(--border-2);      background: var(--surface-2); }
+
+    .topbar-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-2);
+      background: var(--surface-2);
+      color: var(--text-2);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color var(--transition), background var(--transition);
+    }
+    .topbar-btn:hover { color: var(--text); background: var(--surface-3); }
+    .topbar-btn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+
+    /* ─── Sidebar ─────────────────────────────────────────────────────── */
+    .sidebar {
+      border-right: 1px solid var(--border);
+      background: var(--surface);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 12px 10px;
+    }
+
+    .sidebar-section {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-2);
+      padding: 8px 8px 4px;
+    }
+
+    .worklet-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background var(--transition);
+      border: 1px solid transparent;
+      position: relative;
+    }
+    .worklet-item:hover { background: var(--surface-2); }
+    .worklet-item.active {
+      background: var(--accent-dim);
+      border-color: rgba(124,106,247,.3);
+    }
+
+    .worklet-thumb {
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      position: relative;
+    }
+    .worklet-thumb-inner {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .worklet-item-info { min-width: 0; }
+    .worklet-item-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .worklet-item.active .worklet-item-name { color: #fff; }
+    .worklet-item-hint {
+      font-size: 11px;
+      color: var(--text-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 12px 8px 4px;
+      font-size: 11px;
+      color: var(--text-2);
+      border-top: 1px solid var(--border);
+    }
+    .sidebar-footer a { font-size: 11px; }
+
+    /* ─── Main canvas area ────────────────────────────────────────────── */
+    .main {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .canvas-area {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .paint-el {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Per-worklet paint backgrounds */
+    .paint-el[data-worklet="noise-field"]   { background: paint(noise-field); }
+    .paint-el[data-worklet="plasma"]        { background: paint(plasma); }
+    .paint-el[data-worklet="marble"]        { background: paint(marble); }
+    .paint-el[data-worklet="grain"]         { background: paint(grain); }
+    .paint-el[data-worklet="mesh-gradient"] { background: paint(mesh-gradient); }
+
+    .canvas-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-start;
+      padding: 20px;
+      background: linear-gradient(to top, rgba(0,0,0,.55) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .canvas-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.6px;
+      text-shadow: 0 2px 12px rgba(0,0,0,.5);
+    }
+    .canvas-desc {
+      font-size: 13px;
+      color: rgba(255,255,255,.75);
+      max-width: 480px;
+      text-shadow: 0 1px 6px rgba(0,0,0,.5);
+      margin-top: 4px;
+    }
+
+    /* Canvas toolbar */
+    .canvas-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .canvas-toolbar-right { margin-left: auto; display: flex; gap: 8px; }
+
+    .preset-list {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .preset-list::-webkit-scrollbar { display: none; }
+
+    .preset-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      border: 1px solid var(--border-2);
+      background: var(--surface-2);
+      color: var(--text-2);
+      transition: all var(--transition);
+    }
+    .preset-btn:hover { color: var(--text); background: var(--surface-3); }
+    .preset-btn.active { background: var(--accent-dim); border-color: rgba(124,106,247,.4); color: var(--accent); }
+
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-2);
+      background: var(--surface-2);
+      color: var(--text-2);
+      cursor: pointer;
+      font-size: 14px;
+      transition: all var(--transition);
+      flex-shrink: 0;
+    }
+    .icon-btn:hover { color: var(--text); background: var(--surface-3); }
+    .icon-btn.danger:hover { color: var(--red); border-color: rgba(248,113,113,.4); }
+
+    /* ─── Right panel ─────────────────────────────────────────────────── */
+    .panel {
+      border-left: 1px solid var(--border);
+      background: var(--surface);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .panel-tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition);
+    }
+    .panel-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .panel-tab:hover:not(.active) { color: var(--text); }
+
+    .panel-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex: 1;
+    }
+    .panel-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-2);
+      margin-bottom: 10px;
+    }
+
+    /* Controls */
+    .control-group { display: flex; flex-direction: column; gap: 10px; }
+
+    .control-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .control-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .control-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .control-value {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: var(--mono);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      background: var(--surface-3);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: 2px solid var(--surface);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: 2px solid var(--surface);
+    }
+
+    .color-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .color-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    .color-item label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    input[type="color"] {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-2);
+      background: var(--surface-2);
+      cursor: pointer;
+      padding: 2px;
+    }
+
+    /* Animation speed */
+    .anim-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .anim-label { font-size: 12px; color: var(--text-2); font-weight: 600; flex-shrink: 0; }
+    .speed-btns { display: flex; gap: 4px; }
+    .speed-btn {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--mono);
+      cursor: pointer;
+      border: 1px solid var(--border-2);
+      background: var(--surface-2);
+      color: var(--text-2);
+      transition: all var(--transition);
+    }
+    .speed-btn.active { background: var(--accent-dim); border-color: rgba(124,106,247,.4); color: var(--accent); }
+    .speed-btn:hover:not(.active) { color: var(--text); background: var(--surface-3); }
+
+    .pause-btn {
+      margin-left: auto;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid var(--border-2);
+      background: var(--surface-2);
+      color: var(--text-2);
+      transition: all var(--transition);
+    }
+    .pause-btn:hover { color: var(--text); background: var(--surface-3); }
+    .pause-btn.paused { color: var(--green); border-color: rgba(74,222,128,.3); }
+
+    /* Code tab */
+    .code-block {
+      background: var(--bg);
+      border: 1px solid var(--border-2);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      line-height: 1.75;
+      color: #c9d1d9;
+      white-space: pre;
+      overflow-x: auto;
+      tab-size: 2;
+    }
+
+    /* Syntax highlight (minimal) */
+    .tok-kw  { color: #ff79c6; }
+    .tok-str { color: #f1fa8c; }
+    .tok-cmt { color: #6272a4; font-style: italic; }
+    .tok-num { color: #bd93f9; }
+    .tok-prop { color: #50fa7b; }
+
+    .copy-row {
+      display: flex;
+      gap: 6px;
+    }
+    .copy-btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-2);
+      background: var(--surface-2);
+      color: var(--text-2);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      text-align: center;
+    }
+    .copy-btn:hover { color: var(--text); background: var(--surface-3); }
+    .copy-btn.primary { background: var(--accent); color: #fff; border-color: transparent; }
+    .copy-btn.primary:hover { opacity: .85; }
+    .copy-btn.success { background: rgba(74,222,128,.15); border-color: rgba(74,222,128,.3); color: var(--green); }
+
+    /* Info tab */
+    .info-block {
+      background: var(--bg);
+      border: 1px solid var(--border-2);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+    .info-key { color: var(--text-2); font-weight: 600; }
+    .info-val { color: var(--text); font-family: var(--mono); font-size: 11px; }
+    .info-val.green { color: var(--green); }
+    .info-val.yellow { color: var(--yellow); }
+
+    .props-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .prop-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: var(--mono);
+      background: var(--surface-3);
+      color: var(--accent);
+      border: 1px solid var(--border-2);
+    }
+
+    .browser-support {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .support-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+    .support-name { color: var(--text-2); }
+    .support-badge {
+      padding: 2px 8px;
+      border-radius: 100px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .support-yes { background: rgba(74,222,128,.12); color: var(--green); border: 1px solid rgba(74,222,128,.25); }
+    .support-no  { background: rgba(248,113,113,.12); color: var(--red);  border: 1px solid rgba(248,113,113,.25); }
+    .support-poly { background: rgba(251,191,36,.12); color: var(--yellow); border: 1px solid rgba(251,191,36,.25); }
+
+    /* Fullscreen overlay */
+    .fullscreen-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: #000;
+    }
+    .fullscreen-overlay.open { display: block; }
+    .fullscreen-overlay .paint-el {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .fullscreen-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 101;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      background: rgba(0,0,0,.6);
+      border: 1px solid rgba(255,255,255,.15);
+      color: rgba(255,255,255,.8);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: all var(--transition);
+    }
+    .fullscreen-close:hover { background: rgba(0,0,0,.85); color: #fff; }
+
+    /* Loading */
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      z-index: 10;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .loading-overlay.hidden { display: none; }
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid var(--border-2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 13px; color: var(--text-2); }
+
+    /* Responsive — collapse panel on narrow screens */
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: var(--sidebar-w) 1fr;
+        grid-template-rows: 52px 1fr auto;
+      }
+      .panel {
+        grid-column: 1 / -1;
+        border-left: none;
+        border-top: 1px solid var(--border);
+        max-height: 340px;
+      }
+    }
+    @media (max-width: 600px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .sidebar { display: none; }
+      .panel { max-height: 300px; }
+      --panel-w: 100%;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ─── Topbar ─────────────────────────────────────────────────── -->
+  <header class="topbar">
+    <span class="topbar-logo">noise<span>-field</span></span>
+    <span class="topbar-tag tag-dim">Extended Demo</span>
+    <span id="houdini-badge" class="topbar-tag tag-yellow">⬡ Polyfill</span>
+    <span class="topbar-sep"></span>
+    <button class="topbar-btn" id="btn-compare" title="Compare two worklets side by side">⧉ Compare</button>
+    <a class="topbar-btn" href="https://github.com/dpawlikowski/noise-field" target="_blank" rel="noreferrer">
+      ↗ GitHub
+    </a>
+  </header>
+
+  <!-- ─── Sidebar ───────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-section">Worklets</div>
+    <div id="worklet-list"></div>
+
+    <div class="sidebar-footer">
+      Built by <a href="https://github.com/dpawlikowski" target="_blank" rel="noreferrer">Dominik Pawlikowski</a><br>
+      CSS Houdini Paint API &mdash; zero JS on main thread
+    </div>
+  </aside>
+
+  <!-- ─── Main ──────────────────────────────────────────────────── -->
+  <main class="main">
+    <div class="canvas-area" id="canvas-area">
+      <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text">Registering worklets…</div>
+      </div>
+      <!-- paint element injected by JS -->
+      <div class="canvas-overlay" id="canvas-overlay">
+        <div class="canvas-title" id="canvas-title"></div>
+        <div class="canvas-desc" id="canvas-desc"></div>
+      </div>
+    </div>
+
+    <div class="canvas-toolbar">
+      <div class="preset-list" id="preset-list"></div>
+      <div class="canvas-toolbar-right">
+        <button class="icon-btn" id="btn-fullscreen" title="Fullscreen">⛶</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ─── Right panel ───────────────────────────────────────────── -->
+  <aside class="panel">
+    <div class="panel-tabs">
+      <div class="panel-tab active" data-tab="controls">Controls</div>
+      <div class="panel-tab" data-tab="code">CSS</div>
+      <div class="panel-tab" data-tab="info">Info</div>
+    </div>
+    <div class="panel-body" id="panel-body"></div>
+  </aside>
+
+</div>
+
+<!-- ─── Fullscreen overlay ────────────────────────────────────── -->
+<div class="fullscreen-overlay" id="fullscreen-overlay">
+  <button class="fullscreen-close" id="btn-fullscreen-close">✕ Close (Esc)</button>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════
+//  noise-field — Extended Demo
+//  Author: Dominik Pawlikowski
+// ════════════════════════════════════════════════════════════════════
+
+// ─── Worklet source code (inlined as strings → Blob URLs) ─────────
+
+const WORKLET_SRC = {};
+
+WORKLET_SRC['noise-field'] = `
+// noise-field — simplex fBm
+const perm = new Uint8Array(512);
+const gradP = new Array(512);
+const grad3 = [[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],[0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]];
+(function(seed) {
+  const p = new Uint8Array(256);
+  for (let i = 0; i < 256; i++) p[i] = i;
+  let n = seed | 0;
+  for (let i = 255; i > 0; i--) {
+    n = (n * 1664525 + 1013904223) & 0xffffffff;
+    const j = ((n >>> 0) % (i + 1));
+    [p[i], p[j]] = [p[j], p[i]];
+  }
+  for (let i = 0; i < 512; i++) { perm[i] = p[i & 255]; gradP[i] = grad3[perm[i] % 12]; }
+})(42);
+function dot2(g, x, y) { return g[0]*x + g[1]*y; }
+function simplex2(xin, yin) {
+  const F2 = 0.5*(Math.sqrt(3)-1), G2 = (3-Math.sqrt(3))/6;
+  const s = (xin+yin)*F2, i = Math.floor(xin+s), j = Math.floor(yin+s);
+  const t = (i+j)*G2, x0 = xin-(i-t), y0 = yin-(j-t);
+  const i1 = x0>y0?1:0, j1 = x0>y0?0:1;
+  const x1 = x0-i1+G2, y1 = y0-j1+G2, x2 = x0-1+2*G2, y2 = y0-1+2*G2;
+  const ii = i&255, jj = j&255;
+  let n0=0,n1=0,n2=0;
+  let t0 = 0.5-x0*x0-y0*y0; if(t0>=0){t0*=t0;n0=t0*t0*dot2(gradP[ii+perm[jj]],x0,y0);}
+  let t1 = 0.5-x1*x1-y1*y1; if(t1>=0){t1*=t1;n1=t1*t1*dot2(gradP[ii+i1+perm[jj+j1]],x1,y1);}
+  let t2 = 0.5-x2*x2-y2*y2; if(t2>=0){t2*=t2;n2=t2*t2*dot2(gradP[ii+1+perm[jj+1]],x2,y2);}
+  return 70*(n0+n1+n2);
+}
+function fbm(x, y, octaves) {
+  let v=0,a=0.5,f=1;
+  for(let i=0;i<octaves;i++){v+=a*simplex2(x*f,y*f);a*=0.5;f*=2;}
+  return v;
+}
+registerPaint('noise-field', class {
+  static get inputProperties() { return ['--nf-hue','--nf-scale','--nf-speed','--nf-time','--nf-saturation','--nf-lightness']; }
+  paint(ctx, size, props) {
+    const hue = parseFloat(props.get('--nf-hue'))||220;
+    const scale = parseFloat(props.get('--nf-scale'))||3;
+    const time = parseFloat(props.get('--nf-time'))||0;
+    const saturation = parseFloat(props.get('--nf-saturation'))||70;
+    const lightness = parseFloat(props.get('--nf-lightness'))||50;
+    const {width,height} = size;
+    const BLOCK = 4, t = time*0.001;
+    for(let y=0;y<height;y+=BLOCK){
+      for(let x=0;x<width;x+=BLOCK){
+        const nx=(x/width)*scale, ny=(y/height)*scale;
+        const n=fbm(nx+t*0.3,ny+t*0.2,4);
+        const h=(hue+n*40+360)%360, l=lightness+n*15;
+        ctx.fillStyle=\`hsl(\${h},\${saturation}%,\${l}%)\`;
+        ctx.fillRect(x,y,BLOCK,BLOCK);
+      }
+    }
+  }
+});
+`;
+
+WORKLET_SRC['plasma'] = `
+registerPaint('plasma', class {
+  static get inputProperties() { return ['--plasma-hue','--plasma-speed','--plasma-complexity','--plasma-time']; }
+  paint(ctx, size, props) {
+    const hue = parseFloat(props.get('--plasma-hue'))||0;
+    const complexity = parseFloat(props.get('--plasma-complexity'))||3;
+    const time = parseFloat(props.get('--plasma-time'))||0;
+    const {width,height} = size;
+    const BLOCK = 4, t = time*0.001;
+    for(let y=0;y<height;y+=BLOCK){
+      for(let x=0;x<width;x+=BLOCK){
+        const nx=x/width*complexity, ny=y/height*complexity;
+        const v=Math.sin(nx*2+t)+Math.sin(ny*2+t*0.7)+Math.sin((nx+ny)*1.5+t*1.3)+Math.sin(Math.sqrt(nx*nx+ny*ny)*3+t*0.5);
+        const n=(v+4)/8;
+        const h=(hue+n*180)%360, s=80+n*20, l=40+n*30;
+        ctx.fillStyle=\`hsl(\${h},\${s}%,\${l}%)\`;
+        ctx.fillRect(x,y,BLOCK,BLOCK);
+      }
+    }
+  }
+});
+`;
+
+WORKLET_SRC['marble'] = `
+const perm = new Uint8Array(512);
+const gradP = new Array(512);
+const grad3 = [[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],[0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]];
+(function(seed) {
+  const p = new Uint8Array(256);
+  for(let i=0;i<256;i++) p[i]=i;
+  let n=seed|0;
+  for(let i=255;i>0;i--){n=(n*1664525+1013904223)&0xffffffff;const j=((n>>>0)%(i+1));[p[i],p[j]]=[p[j],p[i]];}
+  for(let i=0;i<512;i++){perm[i]=p[i&255];gradP[i]=grad3[perm[i]%12];}
+})(137);
+function dot2(g,x,y){return g[0]*x+g[1]*y;}
+function simplex2(xin,yin){
+  const F2=0.5*(Math.sqrt(3)-1),G2=(3-Math.sqrt(3))/6;
+  const s=(xin+yin)*F2,i=Math.floor(xin+s),j=Math.floor(yin+s);
+  const t=(i+j)*G2,x0=xin-(i-t),y0=yin-(j-t);
+  const i1=x0>y0?1:0,j1=x0>y0?0:1;
+  const x1=x0-i1+G2,y1=y0-j1+G2,x2=x0-1+2*G2,y2=y0-1+2*G2;
+  const ii=i&255,jj=j&255;let n0=0,n1=0,n2=0;
+  let t0=0.5-x0*x0-y0*y0;if(t0>=0){t0*=t0;n0=t0*t0*dot2(gradP[ii+perm[jj]],x0,y0);}
+  let t1=0.5-x1*x1-y1*y1;if(t1>=0){t1*=t1;n1=t1*t1*dot2(gradP[ii+i1+perm[jj+j1]],x1,y1);}
+  let t2=0.5-x2*x2-y2*y2;if(t2>=0){t2*=t2;n2=t2*t2*dot2(gradP[ii+1+perm[jj+1]],x2,y2);}
+  return 70*(n0+n1+n2);
+}
+function fbm(x,y,octaves){let v=0,a=0.5,f=1;for(let i=0;i<octaves;i++){v+=a*simplex2(x*f,y*f);a*=0.5;f*=2;}return v;}
+registerPaint('marble', class {
+  static get inputProperties() { return ['--marble-hue','--marble-scale','--marble-contrast','--marble-time','--marble-vein-width']; }
+  paint(ctx,size,props){
+    const hue=parseFloat(props.get('--marble-hue'))||200;
+    const scale=parseFloat(props.get('--marble-scale'))||2;
+    const contrast=parseFloat(props.get('--marble-contrast'))||1.2;
+    const time=parseFloat(props.get('--marble-time'))||0;
+    const veinWidth=parseFloat(props.get('--marble-vein-width'))||5;
+    const {width,height}=size;
+    const BLOCK=4,t=time*0.0003;
+    for(let y=0;y<height;y+=BLOCK){
+      for(let x=0;x<width;x+=BLOCK){
+        const nx=(x/width)*scale,ny=(y/height)*scale;
+        const turbulence=fbm(nx+t*0.1,ny+t*0.08,5);
+        const marble=Math.sin((nx+turbulence*contrast)*veinWidth*Math.PI);
+        const n=(marble+1)/2;
+        ctx.fillStyle=\`hsl(\${hue+n*15},\${10+n*20}%,\${25+n*60}%)\`;
+        ctx.fillRect(x,y,BLOCK,BLOCK);
+      }
+    }
+  }
+});
+`;
+
+WORKLET_SRC['grain'] = `
+registerPaint('grain', class {
+  static get inputProperties() { return ['--grain-opacity','--grain-size','--grain-time','--grain-base-hue','--grain-base-lightness']; }
+  paint(ctx,size,props){
+    const opacity=parseFloat(props.get('--grain-opacity'))||0.5;
+    const grainSz=parseFloat(props.get('--grain-size'))||1;
+    const time=parseFloat(props.get('--grain-time'))||0;
+    const baseHue=parseFloat(props.get('--grain-base-hue'))||0;
+    const baseLightness=parseFloat(props.get('--grain-base-lightness'))||8;
+    const {width,height}=size;
+    const seed=Math.floor(time*0.5)%9999;
+    ctx.fillStyle=\`hsl(\${baseHue},10%,\${baseLightness}%)\`;
+    ctx.fillRect(0,0,width,height);
+    function rand(x,y){let n=Math.sin(x*127.1+y*311.7+seed*43.5)*43758.5453;return n-Math.floor(n);}
+    const BLOCK=Math.max(1,Math.round(grainSz));
+    for(let y=0;y<height;y+=BLOCK){
+      for(let x=0;x<width;x+=BLOCK){
+        const r=rand(x,y),b=Math.round(r*255);
+        ctx.fillStyle=\`rgba(\${b},\${b},\${b},\${opacity})\`;
+        ctx.fillRect(x,y,BLOCK,BLOCK);
+      }
+    }
+  }
+});
+`;
+
+WORKLET_SRC['mesh-gradient'] = `
+function hexToRgb(hex){const h=hex.replace('#','');return[parseInt(h.substring(0,2),16),parseInt(h.substring(2,4),16),parseInt(h.substring(4,6),16)];}
+registerPaint('mesh-gradient', class {
+  static get inputProperties() { return ['--mesh-color-1','--mesh-color-2','--mesh-color-3','--mesh-color-4','--mesh-speed','--mesh-time']; }
+  paint(ctx,size,props){
+    const c1Raw=(props.get('--mesh-color-1')+'').trim()||'#667eea';
+    const c2Raw=(props.get('--mesh-color-2')+'').trim()||'#764ba2';
+    const c3Raw=(props.get('--mesh-color-3')+'').trim()||'#f093fb';
+    const c4Raw=(props.get('--mesh-color-4')+'').trim()||'#f5576c';
+    const time=parseFloat(props.get('--mesh-time'))||0;
+    const c1=hexToRgb(c1Raw),c2=hexToRgb(c2Raw),c3=hexToRgb(c3Raw),c4=hexToRgb(c4Raw);
+    const {width,height}=size;
+    const BLOCK=6,t=time*0.0008;
+    const p1x=0.3+Math.sin(t*1.1)*0.25,p1y=0.3+Math.cos(t*0.9)*0.25;
+    const p2x=0.7+Math.cos(t*0.7)*0.25,p2y=0.3+Math.sin(t*1.3)*0.25;
+    const p3x=0.3+Math.sin(t*0.8)*0.25,p3y=0.7+Math.cos(t*1.2)*0.25;
+    const p4x=0.7+Math.cos(t*1.0)*0.25,p4y=0.7+Math.sin(t*0.6)*0.25;
+    function d2(ax,ay,bx,by){return(ax-bx)**2+(ay-by)**2;}
+    for(let y=0;y<height;y+=BLOCK){
+      for(let x=0;x<width;x+=BLOCK){
+        const nx=x/width,ny=y/height;
+        const w1=1/(d2(nx,ny,p1x,p1y)+0.001),w2=1/(d2(nx,ny,p2x,p2y)+0.001);
+        const w3=1/(d2(nx,ny,p3x,p3y)+0.001),w4=1/(d2(nx,ny,p4x,p4y)+0.001);
+        const wT=w1+w2+w3+w4;
+        const r=Math.round((c1[0]*w1+c2[0]*w2+c3[0]*w3+c4[0]*w4)/wT);
+        const g=Math.round((c1[1]*w1+c2[1]*w2+c3[1]*w3+c4[1]*w4)/wT);
+        const b=Math.round((c1[2]*w1+c2[2]*w2+c3[2]*w3+c4[2]*w4)/wT);
+        ctx.fillStyle=\`rgb(\${r},\${g},\${b})\`;
+        ctx.fillRect(x,y,BLOCK,BLOCK);
+      }
+    }
+  }
+});
+`;
+
+// ─── Worklet configs with presets ─────────────────────────────────
+
+const WORKLETS = [
+  {
+    name: 'noise-field',
+    title: 'Noise Field',
+    hint: 'Simplex fBm',
+    description: 'Organic fractional Brownian motion — layered simplex noise flowing through time. Four octaves of coherent noise mapped to HSL.',
+    animVars: { var: '--nf-time', keyframe: 'nf-flow', duration: 12 },
+    cssProps: ['--nf-hue', '--nf-scale', '--nf-saturation', '--nf-lightness'],
+    controls: [
+      { label: 'Hue',        var: '--nf-hue',        min: 0,   max: 360, step: 1,   default: 220 },
+      { label: 'Scale',      var: '--nf-scale',       min: 0.5, max: 10,  step: 0.1, default: 3   },
+      { label: 'Saturation', var: '--nf-saturation',  min: 0,   max: 100, step: 1,   default: 70  },
+      { label: 'Lightness',  var: '--nf-lightness',   min: 10,  max: 90,  step: 1,   default: 50  },
+    ],
+    presets: [
+      { label: 'Ocean',    values: { '--nf-hue': 210, '--nf-scale': 3,   '--nf-saturation': 80, '--nf-lightness': 45 } },
+      { label: 'Forest',   values: { '--nf-hue': 130, '--nf-scale': 4,   '--nf-saturation': 60, '--nf-lightness': 40 } },
+      { label: 'Ember',    values: { '--nf-hue': 15,  '--nf-scale': 2.5, '--nf-saturation': 90, '--nf-lightness': 55 } },
+      { label: 'Dusk',     values: { '--nf-hue': 270, '--nf-scale': 5,   '--nf-saturation': 50, '--nf-lightness': 35 } },
+      { label: 'Arctic',   values: { '--nf-hue': 195, '--nf-scale': 1.5, '--nf-saturation': 30, '--nf-lightness': 70 } },
+    ],
+  },
+  {
+    name: 'plasma',
+    title: 'Plasma',
+    hint: 'Sine interference',
+    description: 'Classic demoscene plasma — four sine waves at different angles and speeds creating psychedelic interference patterns.',
+    animVars: { var: '--plasma-time', keyframe: 'plasma-flow', duration: 8 },
+    cssProps: ['--plasma-hue', '--plasma-complexity'],
+    controls: [
+      { label: 'Hue',        var: '--plasma-hue',        min: 0, max: 360, step: 1,   default: 0 },
+      { label: 'Complexity', var: '--plasma-complexity',  min: 1, max: 8,   step: 0.5, default: 3 },
+    ],
+    presets: [
+      { label: 'Rainbow',   values: { '--plasma-hue': 0,   '--plasma-complexity': 3 } },
+      { label: 'Neon',      values: { '--plasma-hue': 300, '--plasma-complexity': 4.5 } },
+      { label: 'Acid',      values: { '--plasma-hue': 90,  '--plasma-complexity': 6 } },
+      { label: 'Deep',      values: { '--plasma-hue': 240, '--plasma-complexity': 2 } },
+    ],
+  },
+  {
+    name: 'marble',
+    title: 'Marble',
+    hint: 'Turbulence veining',
+    description: 'Turbulence-distorted sine creates veining like natural stone. Turbulence from 5-octave fBm, slowly animated.',
+    animVars: { var: '--marble-time', keyframe: 'marble-flow', duration: 20 },
+    cssProps: ['--marble-hue', '--marble-scale', '--marble-contrast', '--marble-vein-width'],
+    controls: [
+      { label: 'Hue',        var: '--marble-hue',         min: 0,   max: 360, step: 1,   default: 200 },
+      { label: 'Scale',      var: '--marble-scale',        min: 0.5, max: 6,   step: 0.1, default: 2   },
+      { label: 'Contrast',   var: '--marble-contrast',     min: 0.2, max: 3,   step: 0.1, default: 1.2 },
+      { label: 'Vein Width', var: '--marble-vein-width',   min: 1,   max: 15,  step: 0.5, default: 5   },
+    ],
+    presets: [
+      { label: 'Carrara',    values: { '--marble-hue': 210, '--marble-scale': 2,   '--marble-contrast': 1.2, '--marble-vein-width': 5   } },
+      { label: 'Nero',       values: { '--marble-hue': 0,   '--marble-scale': 1.5, '--marble-contrast': 2,   '--marble-vein-width': 7   } },
+      { label: 'Jade',       values: { '--marble-hue': 140, '--marble-scale': 3,   '--marble-contrast': 0.8, '--marble-vein-width': 3   } },
+      { label: 'Onyx',       values: { '--marble-hue': 260, '--marble-scale': 2.5, '--marble-contrast': 1.5, '--marble-vein-width': 9   } },
+      { label: 'Travertine', values: { '--marble-hue': 35,  '--marble-scale': 1,   '--marble-contrast': 0.5, '--marble-vein-width': 12  } },
+    ],
+  },
+  {
+    name: 'grain',
+    title: 'Film Grain',
+    hint: 'Animated noise overlay',
+    description: 'Pseudo-random per-pixel brightness on dark base. Seed changes each frame so grain flickers like real film. Use as overlay.',
+    animVars: { var: '--grain-time', keyframe: 'grain-flicker', duration: 0.1, timingFn: 'steps(1)' },
+    cssProps: ['--grain-opacity', '--grain-size', '--grain-base-hue', '--grain-base-lightness'],
+    controls: [
+      { label: 'Opacity',    var: '--grain-opacity',        min: 0.05, max: 1,   step: 0.05, default: 0.5 },
+      { label: 'Grain Size', var: '--grain-size',           min: 1,    max: 8,   step: 1,    default: 1   },
+      { label: 'Base Hue',   var: '--grain-base-hue',       min: 0,    max: 360, step: 1,    default: 0   },
+      { label: 'Base Light', var: '--grain-base-lightness', min: 0,    max: 40,  step: 1,    default: 8   },
+    ],
+    presets: [
+      { label: 'Film',      values: { '--grain-opacity': 0.5, '--grain-size': 1, '--grain-base-hue': 0,   '--grain-base-lightness': 8  } },
+      { label: 'Heavy',     values: { '--grain-opacity': 0.8, '--grain-size': 2, '--grain-base-hue': 0,   '--grain-base-lightness': 4  } },
+      { label: 'Sepia',     values: { '--grain-opacity': 0.5, '--grain-size': 1, '--grain-base-hue': 35,  '--grain-base-lightness': 15 } },
+      { label: 'Coarse',    values: { '--grain-opacity': 0.7, '--grain-size': 4, '--grain-base-hue': 210, '--grain-base-lightness': 6  } },
+    ],
+  },
+  {
+    name: 'mesh-gradient',
+    title: 'Mesh Gradient',
+    hint: 'IDW color blending',
+    description: 'Four color control points drifting through space — inverse-distance weighted blending. Inspired by Stripe and Apple.',
+    animVars: { var: '--mesh-time', keyframe: 'mesh-flow', duration: 10 },
+    cssProps: ['--mesh-color-1', '--mesh-color-2', '--mesh-color-3', '--mesh-color-4'],
+    controls: [],
+    colors: [
+      { label: 'Color 1', var: '--mesh-color-1', default: '#667eea' },
+      { label: 'Color 2', var: '--mesh-color-2', default: '#764ba2' },
+      { label: 'Color 3', var: '--mesh-color-3', default: '#f093fb' },
+      { label: 'Color 4', var: '--mesh-color-4', default: '#f5576c' },
+    ],
+    presets: [
+      { label: 'Stripe',    values: { '--mesh-color-1': '#667eea', '--mesh-color-2': '#764ba2', '--mesh-color-3': '#f093fb', '--mesh-color-4': '#f5576c' } },
+      { label: 'Ocean',     values: { '--mesh-color-1': '#0575e6', '--mesh-color-2': '#021b79', '--mesh-color-3': '#00f2fe', '--mesh-color-4': '#4facfe' } },
+      { label: 'Sunset',    values: { '--mesh-color-1': '#f7971e', '--mesh-color-2': '#ffd200', '--mesh-color-3': '#f953c6', '--mesh-color-4': '#b91d73' } },
+      { label: 'Forest',    values: { '--mesh-color-1': '#11998e', '--mesh-color-2': '#38ef7d', '--mesh-color-3': '#134e5e', '--mesh-color-4': '#71b280' } },
+      { label: 'Monochrome',values: { '--mesh-color-1': '#232526', '--mesh-color-2': '#414345', '--mesh-color-3': '#4b4b4b', '--mesh-color-4': '#6e6e6e' } },
+    ],
+  },
+];
+
+// Browser support data
+const BROWSER_SUPPORT = [
+  { name: 'Chrome / Edge', status: 'yes',  label: 'Native' },
+  { name: 'Opera',         status: 'yes',  label: 'Native' },
+  { name: 'Firefox',       status: 'poly', label: 'Polyfill' },
+  { name: 'Safari',        status: 'poly', label: 'Polyfill' },
+  { name: 'Samsung Internet', status: 'yes', label: 'Native' },
+];
+
+// ─── State ────────────────────────────────────────────────────────
+
+const state = {
+  activeWorklet: WORKLETS[0],
+  values: {},
+  activePreset: 0,
+  activeTab: 'controls',
+  animSpeedMul: 1,
+  paused: false,
+  ready: false,
+};
+
+function getValues(worklet = state.activeWorklet) {
+  const key = worklet.name;
+  if (!state.values[key]) {
+    const v = {};
+    worklet.controls.forEach(c => v[c.var] = c.default);
+    worklet.colors?.forEach(c => v[c.var] = c.default);
+    state.values[key] = v;
+  }
+  return state.values[key];
+}
+
+// ─── Worklet registration ─────────────────────────────────────────
+
+async function registerWorklets() {
+  const polyfillNeeded = !(typeof CSS !== 'undefined' && 'paintWorklet' in CSS);
+  if (polyfillNeeded) {
+    // Load polyfill from CDN — fallback for Firefox/Safari
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/css-paint-polyfill';
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  document.getElementById('houdini-badge').textContent = polyfillNeeded ? '⬡ Polyfill' : '⬡ Native Houdini';
+  document.getElementById('houdini-badge').className = `topbar-tag ${polyfillNeeded ? 'tag-yellow' : 'tag-green'}`;
+
+  await Promise.all(WORKLETS.map(w => {
+    const blob = new Blob([WORKLET_SRC[w.name]], { type: 'application/javascript' });
+    const url = URL.createObjectURL(blob);
+    return CSS.paintWorklet.addModule(url);
+  }));
+}
+
+// ─── Animation helpers ────────────────────────────────────────────
+
+function injectAnimation(worklet, el) {
+  const a = worklet.animVars;
+  const styleId = `anim-${worklet.name}`;
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+      @property ${a.var} { syntax: '<number>'; inherits: false; initial-value: 0; }
+      @keyframes ${a.keyframe} { to { ${a.var}: 1000; } }
+    `;
+    document.head.appendChild(style);
+  }
+  const timing = a.timingFn || 'linear';
+  const dur = a.duration / state.animSpeedMul;
+  el.style.animation = `${a.keyframe} ${dur}s ${timing} infinite`;
+}
+
+function updateAnimSpeed() {
+  const el = document.getElementById('paint-el');
+  if (!el) return;
+  injectAnimation(state.activeWorklet, el);
+  if (state.paused) el.style.animationPlayState = 'paused';
+}
+
+// ─── Paint element ────────────────────────────────────────────────
+
+function createPaintEl(worklet, container) {
+  const existing = document.getElementById('paint-el');
+  if (existing) existing.remove();
+
+  const el = document.createElement('div');
+  el.id = 'paint-el';
+  el.className = 'paint-el';
+  el.setAttribute('data-worklet', worklet.name);
+
+  // Apply saved values
+  const vals = getValues(worklet);
+  Object.entries(vals).forEach(([k, v]) => el.style.setProperty(k, String(v)));
+
+  injectAnimation(worklet, el);
+  if (state.paused) el.style.animationPlayState = 'paused';
+
+  container.insertBefore(el, container.firstChild);
+  return el;
+}
+
+// Thumbnail elements in sidebar
+function createThumb(worklet) {
+  const el = document.createElement('div');
+  el.className = 'worklet-thumb-inner';
+  el.setAttribute('data-worklet', worklet.name);
+  el.style.cssText = `background: paint(${worklet.name});`;
+
+  const a = worklet.animVars;
+  const timing = a.timingFn || 'linear';
+  el.style.animation = `${a.keyframe} ${a.duration}s ${timing} infinite`;
+
+  const vals = getValues(worklet);
+  Object.entries(vals).forEach(([k, v]) => el.style.setProperty(k, String(v)));
+  return el;
+}
+
+// ─── Fullscreen ───────────────────────────────────────────────────
+
+let fsEl = null;
+
+function openFullscreen(worklet) {
+  const overlay = document.getElementById('fullscreen-overlay');
+  if (fsEl) fsEl.remove();
+
+  fsEl = document.createElement('div');
+  fsEl.style.cssText = `position:absolute;inset:0;background:paint(${worklet.name});`;
+  const a = worklet.animVars;
+  const timing = a.timingFn || 'linear';
+  fsEl.style.animation = `${a.keyframe} ${a.duration / state.animSpeedMul}s ${timing} infinite`;
+  const vals = getValues(worklet);
+  Object.entries(vals).forEach(([k, v]) => fsEl.style.setProperty(k, String(v)));
+
+  overlay.insertBefore(fsEl, overlay.firstChild);
+  overlay.classList.add('open');
+}
+
+function closeFullscreen() {
+  document.getElementById('fullscreen-overlay').classList.remove('open');
+  if (fsEl) { fsEl.remove(); fsEl = null; }
+}
+
+// ─── Code generation ──────────────────────────────────────────────
+
+function generateCSS(worklet) {
+  const vals = getValues(worklet);
+  const a = worklet.animVars;
+  const timing = a.timingFn || 'linear';
+  const dur = a.duration / state.animSpeedMul;
+
+  const lines = [
+    `/* @property registration */`,
+    `@property ${a.var} {`,
+    `  syntax: '<number>';`,
+    `  inherits: false;`,
+    `  initial-value: 0;`,
+    `}`,
+    ``,
+    `/* keyframe animation */`,
+    `@keyframes ${a.keyframe} {`,
+    `  to { ${a.var}: 1000; }`,
+    `}`,
+    ``,
+    `/* element */`,
+    `.element {`,
+    `  background: paint(${worklet.name});`,
+  ];
+
+  worklet.controls.forEach(c => {
+    lines.push(`  ${c.var}: ${vals[c.var] ?? c.default};`);
+  });
+  worklet.colors?.forEach(c => {
+    lines.push(`  ${c.var}: ${vals[c.var] ?? c.default};`);
+  });
+
+  lines.push(`  animation: ${a.keyframe} ${dur}s ${timing} infinite;`);
+  lines.push(`}`);
+
+  return lines.join('\n');
+}
+
+// ─── UI rendering ─────────────────────────────────────────────────
+
+function renderSidebar() {
+  const list = document.getElementById('worklet-list');
+  list.innerHTML = '';
+
+  WORKLETS.forEach((w, i) => {
+    const item = document.createElement('div');
+    item.className = `worklet-item${w === state.activeWorklet ? ' active' : ''}`;
+    item.dataset.index = i;
+
+    const thumb = document.createElement('div');
+    thumb.className = 'worklet-thumb';
+    thumb.appendChild(createThumb(w));
+
+    const info = document.createElement('div');
+    info.className = 'worklet-item-info';
+    info.innerHTML = `<div class="worklet-item-name">${w.title}</div><div class="worklet-item-hint">${w.hint}</div>`;
+
+    item.appendChild(thumb);
+    item.appendChild(info);
+    item.addEventListener('click', () => selectWorklet(w));
+    list.appendChild(item);
+  });
+}
+
+function renderCanvasOverlay(worklet) {
+  document.getElementById('canvas-title').textContent = worklet.title;
+  document.getElementById('canvas-desc').textContent = worklet.description;
+}
+
+function renderPresets(worklet) {
+  const list = document.getElementById('preset-list');
+  list.innerHTML = '';
+
+  worklet.presets.forEach((p, i) => {
+    const btn = document.createElement('button');
+    btn.className = `preset-btn${i === state.activePreset ? ' active' : ''}`;
+    btn.textContent = p.label;
+    btn.addEventListener('click', () => applyPreset(worklet, p, i));
+    list.appendChild(btn);
+  });
+}
+
+function renderPanel(worklet) {
+  const body = document.getElementById('panel-body');
+  body.innerHTML = '';
+
+  if (state.activeTab === 'controls') {
+    renderControlsTab(worklet, body);
+  } else if (state.activeTab === 'code') {
+    renderCodeTab(worklet, body);
+  } else {
+    renderInfoTab(worklet, body);
+  }
+}
+
+function renderControlsTab(worklet, body) {
+  const vals = getValues(worklet);
+
+  // Sliders
+  if (worklet.controls.length > 0) {
+    const section = document.createElement('div');
+    section.innerHTML = `<div class="panel-section-title">Parameters</div>`;
+    const group = document.createElement('div');
+    group.className = 'control-group';
+
+    worklet.controls.forEach(c => {
+      const row = document.createElement('div');
+      row.className = 'control-row';
+
+      const labelRow = document.createElement('div');
+      labelRow.className = 'control-label-row';
+      labelRow.innerHTML = `<span class="control-label">${c.label}</span><span class="control-value" id="val-${c.var.replace(/^--/, '')}">${vals[c.var] ?? c.default}</span>`;
+
+      const input = document.createElement('input');
+      input.type = 'range';
+      input.min = c.min;
+      input.max = c.max;
+      input.step = c.step;
+      input.value = vals[c.var] ?? c.default;
+      input.addEventListener('input', () => {
+        const v = Number(input.value);
+        updateProp(worklet, c.var, v);
+        const valEl = document.getElementById(`val-${c.var.replace(/^--/, '')}`);
+        if (valEl) valEl.textContent = v;
+        state.activePreset = -1;
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      });
+
+      row.appendChild(labelRow);
+      row.appendChild(input);
+      group.appendChild(row);
+    });
+
+    section.appendChild(group);
+    body.appendChild(section);
+  }
+
+  // Colors
+  if (worklet.colors?.length) {
+    const section = document.createElement('div');
+    section.innerHTML = `<div class="panel-section-title">Colors</div>`;
+    const colorRow = document.createElement('div');
+    colorRow.className = 'color-row';
+
+    worklet.colors.forEach(c => {
+      const item = document.createElement('div');
+      item.className = 'color-item';
+
+      const lbl = document.createElement('label');
+      lbl.textContent = c.label;
+
+      const input = document.createElement('input');
+      input.type = 'color';
+      input.value = vals[c.var] ?? c.default;
+      input.addEventListener('input', () => {
+        updateProp(worklet, c.var, input.value);
+        state.activePreset = -1;
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      });
+
+      item.appendChild(input);
+      item.appendChild(lbl);
+      colorRow.appendChild(item);
+    });
+
+    section.appendChild(colorRow);
+    body.appendChild(section);
+  }
+
+  // Animation speed
+  const animSection = document.createElement('div');
+  animSection.innerHTML = `<div class="panel-section-title">Animation</div>`;
+
+  const animRow = document.createElement('div');
+  animRow.className = 'anim-row';
+  animRow.innerHTML = `<span class="anim-label">Speed</span>`;
+
+  const speedBtns = document.createElement('div');
+  speedBtns.className = 'speed-btns';
+  [['0.5×', 0.5], ['1×', 1], ['2×', 2], ['4×', 4]].forEach(([label, mul]) => {
+    const btn = document.createElement('button');
+    btn.className = `speed-btn${state.animSpeedMul === mul ? ' active' : ''}`;
+    btn.textContent = label;
+    btn.addEventListener('click', () => {
+      state.animSpeedMul = mul;
+      updateAnimSpeed();
+      speedBtns.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+    speedBtns.appendChild(btn);
+  });
+
+  const pauseBtn = document.createElement('button');
+  pauseBtn.className = `pause-btn${state.paused ? ' paused' : ''}`;
+  pauseBtn.textContent = state.paused ? '▶ Resume' : '⏸ Pause';
+  pauseBtn.addEventListener('click', () => {
+    state.paused = !state.paused;
+    const el = document.getElementById('paint-el');
+    if (el) el.style.animationPlayState = state.paused ? 'paused' : 'running';
+    pauseBtn.className = `pause-btn${state.paused ? ' paused' : ''}`;
+    pauseBtn.textContent = state.paused ? '▶ Resume' : '⏸ Pause';
+  });
+
+  animRow.appendChild(speedBtns);
+  animRow.appendChild(pauseBtn);
+  animSection.appendChild(animRow);
+  body.appendChild(animSection);
+}
+
+function renderCodeTab(worklet, body) {
+  const css = generateCSS(worklet);
+
+  const section = document.createElement('div');
+  section.innerHTML = `<div class="panel-section-title">Generated CSS</div>`;
+
+  const block = document.createElement('pre');
+  block.className = 'code-block';
+  block.textContent = css;
+
+  const copyRow = document.createElement('div');
+  copyRow.className = 'copy-row';
+
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'copy-btn primary';
+  copyBtn.textContent = 'Copy to clipboard';
+  copyBtn.addEventListener('click', async () => {
+    await navigator.clipboard.writeText(css);
+    copyBtn.textContent = '✓ Copied!';
+    copyBtn.className = 'copy-btn success';
+    setTimeout(() => {
+      copyBtn.textContent = 'Copy to clipboard';
+      copyBtn.className = 'copy-btn primary';
+    }, 2000);
+  });
+
+  const dlBtn = document.createElement('button');
+  dlBtn.className = 'copy-btn';
+  dlBtn.textContent = 'Download .css';
+  dlBtn.addEventListener('click', () => {
+    const blob = new Blob([css], { type: 'text/css' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${worklet.name}.css`;
+    a.click();
+  });
+
+  copyRow.appendChild(copyBtn);
+  copyRow.appendChild(dlBtn);
+  section.appendChild(block);
+  section.appendChild(copyRow);
+  body.appendChild(section);
+
+  // Note about worklet registration
+  const note = document.createElement('div');
+  note.style.cssText = 'font-size:11px;color:var(--text-2);line-height:1.6;';
+  note.innerHTML = `<strong style="color:var(--text-2)">Note:</strong> You also need to register the worklet:<br>
+<code style="font-family:var(--mono);color:var(--accent);font-size:11px;">CSS.paintWorklet.addModule('${worklet.name}.js')</code>`;
+  body.appendChild(note);
+}
+
+function renderInfoTab(worklet, body) {
+  // Stats
+  const statsSection = document.createElement('div');
+  statsSection.innerHTML = `<div class="panel-section-title">Worklet stats</div>`;
+  const info = document.createElement('div');
+  info.className = 'info-block';
+  info.innerHTML = `
+    <div class="info-row"><span class="info-key">Paint function</span><span class="info-val">${worklet.name}</span></div>
+    <div class="info-row"><span class="info-key">CSS properties</span><span class="info-val">${worklet.cssProps.length}</span></div>
+    <div class="info-row"><span class="info-key">Anim variable</span><span class="info-val">${worklet.animVars.var}</span></div>
+    <div class="info-row"><span class="info-key">Default duration</span><span class="info-val">${worklet.animVars.duration}s</span></div>
+    <div class="info-row"><span class="info-key">Pixel block</span><span class="info-val">${worklet.name === 'mesh-gradient' ? '6px' : worklet.name === 'grain' ? '1–8px' : '4px'}</span></div>
+  `;
+  statsSection.appendChild(info);
+  body.appendChild(statsSection);
+
+  // CSS props
+  const propsSection = document.createElement('div');
+  propsSection.innerHTML = `<div class="panel-section-title">inputProperties</div>`;
+  const propsList = document.createElement('div');
+  propsList.className = 'props-list';
+  propsList.style.display = 'flex';
+  propsList.style.flexWrap = 'wrap';
+  propsList.style.gap = '5px';
+  worklet.cssProps.forEach(p => {
+    const tag = document.createElement('span');
+    tag.className = 'prop-tag';
+    tag.textContent = p;
+    propsList.appendChild(tag);
+  });
+  propsSection.appendChild(propsList);
+  body.appendChild(propsSection);
+
+  // Browser support
+  const browserSection = document.createElement('div');
+  browserSection.innerHTML = `<div class="panel-section-title">Browser support</div>`;
+  const supportList = document.createElement('div');
+  supportList.className = 'browser-support';
+  BROWSER_SUPPORT.forEach(b => {
+    const row = document.createElement('div');
+    row.className = 'support-row';
+    const cls = b.status === 'yes' ? 'support-yes' : b.status === 'poly' ? 'support-poly' : 'support-no';
+    row.innerHTML = `<span class="support-name">${b.name}</span><span class="support-badge ${cls}">${b.label}</span>`;
+    supportList.appendChild(row);
+  });
+  browserSection.appendChild(supportList);
+  body.appendChild(browserSection);
+}
+
+// ─── Prop updates ─────────────────────────────────────────────────
+
+function updateProp(worklet, cssVar, value) {
+  getValues(worklet)[cssVar] = value;
+  const el = document.getElementById('paint-el');
+  if (el) el.style.setProperty(cssVar, String(value));
+  // Also update thumbnails
+  document.querySelectorAll(`[data-worklet="${worklet.name}"]`).forEach(el => {
+    el.style.setProperty(cssVar, String(value));
+  });
+}
+
+function applyPreset(worklet, preset, index) {
+  state.activePreset = index;
+  Object.entries(preset.values).forEach(([k, v]) => {
+    getValues(worklet)[k] = v;
+    updateProp(worklet, k, v);
+  });
+
+  document.querySelectorAll('.preset-btn').forEach((b, i) => {
+    b.classList.toggle('active', i === index);
+  });
+
+  // Refresh controls panel to reflect new values
+  if (state.activeTab === 'controls') renderPanel(worklet);
+}
+
+// ─── Worklet selection ────────────────────────────────────────────
+
+function selectWorklet(worklet) {
+  state.activeWorklet = worklet;
+  state.activePreset = 0;
+
+  const container = document.getElementById('canvas-area');
+  createPaintEl(worklet, container);
+  renderCanvasOverlay(worklet);
+  renderPresets(worklet);
+  renderPanel(worklet);
+
+  // Apply first preset by default
+  if (worklet.presets.length > 0) applyPreset(worklet, worklet.presets[0], 0);
+
+  // Sidebar active state
+  document.querySelectorAll('.worklet-item').forEach(el => {
+    el.classList.toggle('active', WORKLETS[el.dataset.index] === worklet);
+  });
+}
+
+// ─── Panel tab switching ──────────────────────────────────────────
+
+document.querySelectorAll('.panel-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    state.activeTab = tab.dataset.tab;
+    renderPanel(state.activeWorklet);
+  });
+});
+
+// ─── Fullscreen ───────────────────────────────────────────────────
+
+document.getElementById('btn-fullscreen').addEventListener('click', () => {
+  openFullscreen(state.activeWorklet);
+});
+document.getElementById('btn-fullscreen-close').addEventListener('click', closeFullscreen);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeFullscreen();
+});
+
+// ─── Compare mode (side-by-side two worklets) ─────────────────────
+
+let compareMode = false;
+
+document.getElementById('btn-compare').addEventListener('click', () => {
+  compareMode = !compareMode;
+  document.getElementById('btn-compare').classList.toggle('active', compareMode);
+
+  if (compareMode) {
+    openCompare();
+  } else {
+    closeCompare();
+  }
+});
+
+function openCompare() {
+  const overlay = document.getElementById('fullscreen-overlay');
+  overlay.innerHTML = `<button class="fullscreen-close" id="btn-fullscreen-close">✕ Close (Esc)</button>
+  <div id="compare-grid" style="display:grid;grid-template-columns:1fr 1fr;height:100%;"></div>`;
+
+  document.getElementById('btn-fullscreen-close').addEventListener('click', () => {
+    compareMode = false;
+    document.getElementById('btn-compare').classList.remove('active');
+    closeCompare();
+  });
+
+  const grid = document.getElementById('compare-grid');
+  const selected = [WORKLETS[0], WORKLETS[2]];
+
+  selected.forEach((w, i) => {
+    const cell = document.createElement('div');
+    cell.style.cssText = `position:relative;overflow:hidden;${i===0?'border-right:1px solid rgba(255,255,255,.1)':''}`;
+
+    const bg = document.createElement('div');
+    bg.style.cssText = `position:absolute;inset:0;background:paint(${w.name});`;
+    const a = w.animVars;
+    const timing = a.timingFn || 'linear';
+    bg.style.animation = `${a.keyframe} ${a.duration}s ${timing} infinite`;
+    const vals = getValues(w);
+    Object.entries(vals).forEach(([k, v]) => bg.style.setProperty(k, String(v)));
+
+    const label = document.createElement('div');
+    label.style.cssText = `position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.5);color:#fff;padding:6px 14px;border-radius:100px;font-size:13px;font-weight:600;backdrop-filter:blur(8px);white-space:nowrap;border:1px solid rgba(255,255,255,.15);`;
+    label.textContent = w.title;
+
+    cell.appendChild(bg);
+    cell.appendChild(label);
+
+    // Worklet selector
+    const sel = document.createElement('select');
+    sel.style.cssText = `position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;backdrop-filter:blur(8px);`;
+    WORKLETS.forEach(ww => {
+      const opt = document.createElement('option');
+      opt.value = ww.name;
+      opt.textContent = ww.title;
+      if (ww === w) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', () => {
+      const newW = WORKLETS.find(ww => ww.name === sel.value);
+      bg.setAttribute('data-worklet', newW.name);
+      bg.style.background = `paint(${newW.name})`;
+      const newA = newW.animVars;
+      const newTiming = newA.timingFn || 'linear';
+      bg.style.animation = `${newA.keyframe} ${newA.duration}s ${newTiming} infinite`;
+      const newVals = getValues(newW);
+      Object.entries(newVals).forEach(([k, v]) => bg.style.setProperty(k, String(v)));
+      label.textContent = newW.title;
+    });
+
+    cell.appendChild(sel);
+    grid.appendChild(cell);
+  });
+
+  overlay.classList.add('open');
+}
+
+function closeCompare() {
+  const overlay = document.getElementById('fullscreen-overlay');
+  overlay.classList.remove('open');
+  overlay.innerHTML = `<button class="fullscreen-close" id="btn-fullscreen-close">✕ Close (Esc)</button>`;
+  document.getElementById('btn-fullscreen-close').addEventListener('click', closeFullscreen);
+  fsEl = null;
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────
+
+async function boot() {
+  try {
+    await registerWorklets();
+  } catch (e) {
+    console.warn('Worklet registration failed:', e);
+    document.getElementById('loading-overlay').innerHTML = `
+      <div style="color:var(--red);font-size:13px;text-align:center;padding:20px;max-width:340px;">
+        <strong>Worklet registration failed.</strong><br>
+        Serve this file via a local HTTP server — <code>file://</code> protocol blocks Blob URLs in some browsers.<br><br>
+        <code style="font-size:11px;color:var(--text-2)">npx serve demo</code>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('loading-overlay').classList.add('hidden');
+  state.ready = true;
+
+  renderSidebar();
+  selectWorklet(WORKLETS[0]);
+}
+
+boot();
+</script>
+</body>
+</html>
