@@ -11,7 +11,7 @@ Generative animated backgrounds via CSS Houdini Paint API. No canvas elements, n
 }
 ```
 
-**[→ Live demo](https://noise-field.vercel.app)**
+**[→ Live demo](https://dpawlikowski.github.io/noise-field/)**
 
 ---
 
@@ -159,7 +159,33 @@ Polyfill ([css-paint-polyfill](https://github.com/GoogleChromeLabs/css-paint-pol
 npm install
 npm run dev      # → http://localhost:5173
 npm run build
+npm test         # unit tests (vitest)
+npm run test:watch
 ```
+
+---
+
+## Architecture
+
+```
+src/
+├── worklets/          # Self-contained JS worklets (no imports — worklet scope restriction)
+│   ├── noise-field.js
+│   ├── plasma.js
+│   ├── marble.js
+│   ├── grain.js
+│   └── mesh-gradient.js
+├── register.ts        # register() / registerAll() — polyfill detection + addModule()
+├── react/
+│   └── useWorklet.ts  # React hook — setProperty wrapper, zero re-renders
+├── demo/              # Interactive demo app (React)
+│   ├── App.tsx
+│   ├── WorkletCard.tsx
+│   └── workletConfigs.ts
+└── index.ts           # Public API re-exports
+```
+
+Each worklet is self-contained because `addModule(url)` doesn't support ES module `import` — the common simplex noise implementation is inlined into each worklet that needs it.
 
 ---
 

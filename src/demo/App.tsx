@@ -27,7 +27,7 @@ export default function App() {
             </span>
             <a
               className="badge badge--ghost"
-              href="https://github.com/dominikpawlowski/noise-field"
+              href="https://github.com/dpawlikowski/noise-field"
               target="_blank"
               rel="noreferrer"
             >
