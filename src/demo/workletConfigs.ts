@@ -113,4 +113,38 @@ animation: mesh-flow 10s linear infinite;`,
       { label: 'Color 4', cssVar: '--mesh-color-4', defaultValue: '#f5576c' },
     ],
   },
+  {
+    name: 'glitch',
+    title: 'Glitch',
+    description: 'Datamosh-style digital glitch — torn scanline slices with RGB-split chromatic aberration.',
+    cssProperties: `background: paint(glitch);
+--glitch-hue: 200;
+--glitch-intensity: 0.5;
+--glitch-block: 4;
+animation: glitch-flicker 0.08s steps(1) infinite;`,
+    animationCSS: `@property --glitch-time { syntax: '<number>'; inherits: false; initial-value: 0; }
+@keyframes glitch-flicker { to { --glitch-time: 1000; } }`,
+    props: [
+      { label: 'Hue',       cssVar: '--glitch-hue',       min: 0,   max: 360, step: 1,   defaultValue: 200 },
+      { label: 'Intensity', cssVar: '--glitch-intensity', min: 0,   max: 1,   step: 0.05, defaultValue: 0.5 },
+      { label: 'Block Size',cssVar: '--glitch-block',     min: 1,   max: 12,  step: 1,   defaultValue: 4   },
+    ],
+  },
+  {
+    name: 'aurora',
+    title: 'Aurora',
+    description: 'Northern-lights-style bands — additive-blended noise waves drifting across a deep night sky.',
+    cssProperties: `background: paint(aurora);
+--aurora-hue: 150;
+--aurora-bands: 3;
+--aurora-intensity: 1;
+animation: aurora-flow 18s linear infinite;`,
+    animationCSS: `@property --aurora-time { syntax: '<number>'; inherits: false; initial-value: 0; }
+@keyframes aurora-flow { to { --aurora-time: 1000; } }`,
+    props: [
+      { label: 'Hue',       cssVar: '--aurora-hue',       min: 0,   max: 360, step: 1,   defaultValue: 150 },
+      { label: 'Bands',     cssVar: '--aurora-bands',     min: 1,   max: 6,   step: 1,   defaultValue: 3   },
+      { label: 'Intensity', cssVar: '--aurora-intensity', min: 0.2, max: 2,   step: 0.1, defaultValue: 1   },
+    ],
+  },
 ];

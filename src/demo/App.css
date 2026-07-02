@@ -30,6 +30,14 @@ html, body {
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
+/* Visible keyboard focus ring everywhere interactive, without adding one for mouse clicks */
+a:focus-visible,
+.btn:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* ─── Layout ────────────────────────────────────────────────────── */
 .app {
   min-height: 100vh;
@@ -121,6 +129,15 @@ a:hover { text-decoration: underline; }
   border-radius: var(--radius);
   overflow: hidden;
   background: var(--surface);
+  transition: border-color .2s, transform .2s;
+  /* Skip layout/paint work for cards scrolled off-screen — cheap win with
+     7 continuously-animating Paint Worklets on one page. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 420px;
+}
+
+.worklet-card:hover {
+  border-color: var(--accent);
 }
 
 .worklet-preview {
@@ -129,12 +146,25 @@ a:hover { text-decoration: underline; }
   display: block;
 }
 
+/* Respect the user's OS-level motion preference — pause every worklet
+   animation and let the paint worklet render a single static frame. */
+@media (prefers-reduced-motion: reduce) {
+  .worklet-preview {
+    animation-play-state: paused !important;
+  }
+  .worklet-card {
+    transition: none;
+  }
+}
+
 /* Paint backgrounds + animation — worklet-specific */
 .worklet-noise-field   { background: paint(noise-field);   animation: nf-flow      12s  linear   infinite; }
 .worklet-plasma        { background: paint(plasma);        animation: plasma-flow   8s   linear   infinite; }
 .worklet-marble        { background: paint(marble);        animation: marble-flow   20s  linear   infinite; }
 .worklet-grain         { background: paint(grain);         animation: grain-flicker 0.1s steps(1) infinite; --grain-bg: #111; }
 .worklet-mesh-gradient { background: paint(mesh-gradient); animation: mesh-flow     10s  linear   infinite; }
+.worklet-glitch        { background: paint(glitch);        animation: glitch-flicker 0.08s steps(1) infinite; }
+.worklet-aurora        { background: paint(aurora);        animation: aurora-flow   18s  linear   infinite; }
 
 .worklet-info {
   padding: 20px 24px;

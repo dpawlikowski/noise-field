@@ -1,4 +1,4 @@
-export type WorkletName = 'noise-field' | 'plasma' | 'grain' | 'marble' | 'mesh-gradient';
+export type WorkletName = 'noise-field' | 'plasma' | 'grain' | 'marble' | 'mesh-gradient' | 'glitch' | 'aurora';
 
 // CSS.paintWorklet is not in TypeScript's lib.dom.d.ts — extend the global
 declare global {
@@ -14,6 +14,8 @@ const workletUrls: Record<WorkletName, () => string> = {
   'grain':         () => new URL('./worklets/grain.js',         import.meta.url).href,
   'marble':        () => new URL('./worklets/marble.js',        import.meta.url).href,
   'mesh-gradient': () => new URL('./worklets/mesh-gradient.js', import.meta.url).href,
+  'glitch':        () => new URL('./worklets/glitch.js',        import.meta.url).href,
+  'aurora':        () => new URL('./worklets/aurora.js',        import.meta.url).href,
 };
 
 const registered = new Set<WorkletName>();

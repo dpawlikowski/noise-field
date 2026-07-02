@@ -60,9 +60,9 @@ describe('register', () => {
 });
 
 describe('registerAll', () => {
-  it('registers all 5 worklets', async () => {
+  it('registers all 7 worklets', async () => {
     const { registerAll } = await import('../register');
     await registerAll();
-    expect(mockAddModule).toHaveBeenCalledTimes(5);
+    expect(mockAddModule).toHaveBeenCalledTimes(7);
   });
 });

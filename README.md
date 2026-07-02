@@ -24,6 +24,8 @@ Generative animated backgrounds via CSS Houdini Paint API. No canvas elements, n
 | `marble` | Turbulence-distorted veining | `--marble-hue`, `--marble-scale`, `--marble-vein-width` |
 | `grain` | Animated film grain | `--grain-opacity`, `--grain-size`, `--grain-base-hue` |
 | `mesh-gradient` | Stripe-style 4-color mesh | `--mesh-color-1..4` |
+| `glitch` | Datamosh / RGB-split digital glitch | `--glitch-hue`, `--glitch-intensity`, `--glitch-block` |
+| `aurora` | Additive-blended northern-lights bands | `--aurora-hue`, `--aurora-bands`, `--aurora-intensity` |
 
 All worklets animate via `@property` + CSS `animation` — zero JS after registration.
 
@@ -66,6 +68,18 @@ registerPaint('noise-field', class {
 ### 4×4 block rendering
 
 Per-pixel at 1920×1080 = ~2M iterations/frame. Blocks of 4×4 = ~130K. 15× faster, visually imperceptible.
+
+---
+
+## Performance
+
+- **Block rendering** — every worklet fills 4×4px (or coarser) blocks instead of individual pixels; see above.
+- **Analytic bounds over brute force** — `aurora` computes each band's visible y-range up front instead of scanning the full column height and discarding out-of-range pixels.
+- **Pause off-screen** — the demo pauses `animation-play-state` on any card that scrolls out of the viewport (`IntersectionObserver`, 200px margin), since a Paint Worklet keeps repainting every animation frame even when invisible.
+- **`content-visibility: auto`** on worklet cards skips layout/paint work entirely for off-screen cards.
+- **`prefers-reduced-motion`** is respected — animations pause and the worklet renders a single static frame for users who've opted out of motion at the OS level.
+
+These are demo/consumer-side optimizations; when you use a worklet directly, apply the same pattern (pause `animation-play-state` off-screen, respect reduced motion) to any layout with many animated backgrounds at once.
 
 ---
 
@@ -174,7 +188,9 @@ src/
 │   ├── plasma.js
 │   ├── marble.js
 │   ├── grain.js
-│   └── mesh-gradient.js
+│   ├── mesh-gradient.js
+│   ├── glitch.js
+│   └── aurora.js
 ├── register.ts        # register() / registerAll() — polyfill detection + addModule()
 ├── react/
 │   └── useWorklet.ts  # React hook — setProperty wrapper, zero re-renders

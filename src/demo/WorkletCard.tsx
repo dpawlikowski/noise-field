@@ -25,6 +25,23 @@ export function WorkletCard({ config }: Props) {
     }
   }, [config.name, config.animationCSS]);
 
+  // Paint Worklets keep repainting every animation frame even off-screen.
+  // With 7 cards animating at once that's wasted CPU/battery — pause the
+  // CSS animation on any card that scrolls out of the viewport.
+  useEffect(() => {
+    const el = previewRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        el.style.animationPlayState = entry.isIntersecting ? 'running' : 'paused';
+      },
+      { rootMargin: '200px 0px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   // Apply initial CSS custom property defaults to the element
   useEffect(() => {
     const el = previewRef.current;
@@ -98,10 +115,14 @@ export function WorkletCard({ config }: Props) {
             <p className="worklet-desc">{config.description}</p>
           </div>
           <div className="worklet-actions">
-            <button className="btn btn-ghost" onClick={() => setShowSource(s => !s)}>
+            <button
+              className="btn btn-ghost"
+              onClick={() => setShowSource(s => !s)}
+              aria-expanded={showSource}
+            >
               {showSource ? 'Hide source' : 'View source'}
             </button>
-            <button className="btn btn-primary" onClick={copyCSS}>
+            <button className="btn btn-primary" onClick={copyCSS} aria-live="polite">
               {copied ? '✓ Copied' : 'Copy CSS'}
             </button>
           </div>
@@ -158,6 +179,8 @@ function animationValue(name: string): string {
     'marble':        'marble-flow 20s linear infinite',
     'grain':         'grain-flicker 0.1s steps(1) infinite',
     'mesh-gradient': 'mesh-flow 10s linear infinite',
+    'glitch':        'glitch-flicker 0.08s steps(1) infinite',
+    'aurora':        'aurora-flow 18s linear infinite',
   };
   return map[name] ?? '';
 }

@@ -1,16 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { workletConfigs } from '../demo/workletConfigs';
 
-const EXPECTED_NAMES = ['noise-field', 'plasma', 'marble', 'grain', 'mesh-gradient'] as const;
+const EXPECTED_NAMES = ['noise-field', 'plasma', 'marble', 'grain', 'mesh-gradient', 'glitch', 'aurora'] as const;
 
 describe('workletConfigs', () => {
-  it('contains exactly 5 entries', () => {
-    expect(workletConfigs).toHaveLength(5);
+  it('contains exactly 7 entries', () => {
+    expect(workletConfigs).toHaveLength(7);
   });
 
   it('has all required worklet names', () => {
     const names = workletConfigs.map(c => c.name);
-    expect(names).toEqual(expect.arrayContaining(EXPECTED_NAMES));
+    expect(names).toEqual(expect.arrayContaining([...EXPECTED_NAMES]));
   });
 
   it('every config has non-empty title and description', () => {
