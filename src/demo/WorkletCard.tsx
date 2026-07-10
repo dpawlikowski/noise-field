@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { WorkletConfig } from './workletConfigs';
 
+/** How long the "✓ Copied" confirmation stays visible after copying the CSS. */
+const COPY_FEEDBACK_MS = 2000;
+/** Keep cards animating slightly before they scroll into view to avoid a visible cold-start. */
+const OFFSCREEN_ROOT_MARGIN = '200px 0px';
+
 interface Props {
   config: WorkletConfig;
 }
@@ -36,7 +41,7 @@ export function WorkletCard({ config }: Props) {
       ([entry]) => {
         el.style.animationPlayState = entry.isIntersecting ? 'running' : 'paused';
       },
-      { rootMargin: '200px 0px' }
+      { rootMargin: OFFSCREEN_ROOT_MARGIN }
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -86,7 +91,7 @@ export function WorkletCard({ config }: Props) {
 
     await navigator.clipboard.writeText(output);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), COPY_FEEDBACK_MS);
   }, [config]);
 
   const sourceText = [
